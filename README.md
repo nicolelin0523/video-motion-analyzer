@@ -17,6 +17,9 @@ The project will gradually include video reading, frame difference calculation, 
 * Application entry point completed
 * `.gitignore` configured
 * `requirements.txt` created
+* Video metadata reader completed
+* Command-line video path input added
+* Basic error handling added
 
 ## Project Structure
 
