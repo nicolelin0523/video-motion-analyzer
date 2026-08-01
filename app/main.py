@@ -1,6 +1,6 @@
 import argparse
 
-from src.video.reader import read_video_metadata
+from src.video.reader import count_readable_frames, read_video_metadata
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -27,6 +27,7 @@ def main() -> None:
 
     try:
         metadata = read_video_metadata(video_path)
+        readable_frame_count = count_readable_frames(video_path)
     except FileNotFoundError as error:
         print(f"Error: {error}")
         return
@@ -39,7 +40,8 @@ def main() -> None:
     print(f"Video path: {metadata.path}")
     print(f"Resolution: {metadata.width} x {metadata.height}")
     print(f"FPS: {metadata.fps:.2f}")
-    print(f"Frame count: {metadata.frame_count}")
+    print(f"Metadata frame count: {metadata.frame_count}")
+    print(f"Readable frame count: {readable_frame_count}")
     print(f"Duration: {metadata.duration_seconds:.2f} seconds")
 
 

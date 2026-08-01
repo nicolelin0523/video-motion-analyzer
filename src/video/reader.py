@@ -46,3 +46,29 @@ def read_video_metadata(video_path: str) -> VideoMetadata:
         frame_count=frame_count,
         duration_seconds=duration_seconds,
     )
+def count_readable_frames(video_path: str) -> int:
+    """Read the video frame by frame and count readable frames."""
+
+    path = Path(video_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+
+    capture = cv2.VideoCapture(str(path))
+
+    if not capture.isOpened():
+        raise ValueError(f"Unable to open video file: {video_path}")
+
+    readable_frame_count = 0
+
+    while True:
+        success, _ = capture.read()
+
+        if not success:
+            break
+
+        readable_frame_count += 1
+
+    capture.release()
+
+    return readable_frame_count
