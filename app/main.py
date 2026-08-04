@@ -8,6 +8,7 @@ from src.video.reader import (
     count_readable_frames,
     read_video_metadata,
 )
+from src.visualization.plotter import plot_motion_curve
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -50,12 +51,19 @@ def main() -> None:
     maximum_score_frame = maximum_score_index + 2
     maximum_score_time = maximum_score_frame / metadata.fps
 
-    output_path = "outputs/motion_scores.csv"
+    
+    csv_output_path = "outputs/motion_scores.csv"
+    plot_output_path = "outputs/motion_curve.png"
 
     save_motion_scores_to_csv(
         motion_scores=motion_scores,
         fps=metadata.fps,
-        output_path=output_path,
+        output_path=csv_output_path,
+    )
+    plot_motion_curve(
+        motion_scores=motion_scores,
+        fps=metadata.fps,
+        output_path=plot_output_path,
     )
 
     print("Video Motion Analyzer")
@@ -72,7 +80,8 @@ def main() -> None:
     print(f"Maximum frame change score: {maximum_score:.2f}")
     print(f"Maximum change occurs at frame: {maximum_score_frame}")
     print(f"Maximum change time: {maximum_score_time:.2f} seconds")
-    print(f"Motion scores saved to: {output_path}")
+    print(f"Motion scores saved to: {csv_output_path}")
+    print(f"Motion curve saved to: {plot_output_path}")
 
 
 if __name__ == "__main__":
