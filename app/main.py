@@ -2,10 +2,14 @@ import argparse
 
 import numpy as np
 
-from src.motion.frame_difference import save_motion_scores_to_csv
+from src.motion.frame_difference import (
+    save_frame_difference_images,
+    save_motion_scores_to_csv,
+)
 from src.video.reader import (
     calculate_video_motion_scores,
     count_readable_frames,
+    read_frame_pair,
     read_video_metadata,
 )
 from src.visualization.plotter import plot_motion_curve
@@ -51,6 +55,16 @@ def main() -> None:
     maximum_score_frame = maximum_score_index + 2
     maximum_score_time = maximum_score_frame / metadata.fps
 
+    previous_frame, current_frame = read_frame_pair(
+        video_path=video_path,
+        current_frame_number=maximum_score_frame,
+    )
+    save_frame_difference_images(
+        previous_frame=previous_frame,
+        current_frame=current_frame,
+        output_directory="outputs",
+    )
+
     
     csv_output_path = "outputs/motion_scores.csv"
     plot_output_path = "outputs/motion_curve.png"
@@ -82,6 +96,7 @@ def main() -> None:
     print(f"Maximum change time: {maximum_score_time:.2f} seconds")
     print(f"Motion scores saved to: {csv_output_path}")
     print(f"Motion curve saved to: {plot_output_path}")
+    print("Maximum change frame images saved to: outputs")
 
 
 if __name__ == "__main__":

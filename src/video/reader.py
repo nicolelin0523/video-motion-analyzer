@@ -114,3 +114,37 @@ def calculate_video_motion_scores(video_path: str) -> list[float]:
     capture.release()
 
     return motion_scores
+
+def read_frame_pair(
+    video_path: str,
+    current_frame_number: int,
+) -> tuple:
+    """Read the previous and current frames at a specified frame number."""
+
+    path = Path(video_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+
+    if current_frame_number < 2:
+        raise ValueError("Current frame number must be at least 2.")
+
+    capture = cv2.VideoCapture(str(path))
+
+    if not capture.isOpened():
+        raise ValueError(f"Unable to open video file: {video_path}")
+
+    previous_frame_index = current_frame_number - 2
+    capture.set(cv2.CAP_PROP_POS_FRAMES, previous_frame_index)
+
+    previous_success, previous_frame = capture.read()
+    current_success, current_frame = capture.read()
+
+    capture.release()
+
+    if not previous_success or not current_success:
+        raise ValueError(
+            f"Unable to read frame pair ending at frame {current_frame_number}."
+        )
+
+    return previous_frame, current_frame

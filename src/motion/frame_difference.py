@@ -46,3 +46,26 @@ def save_motion_scores_to_csv(
 
     dataframe = pd.DataFrame(rows)
     dataframe.to_csv(output, index=False)
+
+def save_frame_difference_images(
+    previous_frame: NDArray[np.uint8],
+    current_frame: NDArray[np.uint8],
+    output_directory: str,
+) -> None:
+    """Save the previous, current, and difference images."""
+
+    output_dir = Path(output_directory)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    previous_gray = cv2.cvtColor(previous_frame, cv2.COLOR_BGR2GRAY)
+    current_gray = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
+
+    difference = cv2.absdiff(previous_gray, current_gray)
+
+    previous_output = output_dir / "max_change_previous.jpg"
+    current_output = output_dir / "max_change_current.jpg"
+    difference_output = output_dir / "max_change_difference.jpg"
+
+    cv2.imwrite(str(previous_output), previous_frame)
+    cv2.imwrite(str(current_output), current_frame)
+    cv2.imwrite(str(difference_output), difference)    
