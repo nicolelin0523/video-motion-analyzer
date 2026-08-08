@@ -3,11 +3,11 @@ import argparse
 import numpy as np
 
 from src.motion.frame_difference import (
+    save_analysis_results_to_csv,
     save_frame_difference_images,
-    save_motion_scores_to_csv,
 )
 from src.video.reader import (
-    calculate_video_motion_scores,
+    analyze_video_frames,
     count_readable_frames,
     read_frame_pair,
     read_video_metadata,
@@ -40,7 +40,11 @@ def main() -> None:
     try:
         metadata = read_video_metadata(video_path)
         readable_frame_count = count_readable_frames(video_path)
-        motion_scores = calculate_video_motion_scores(video_path)
+        analysis_results = analyze_video_frames(video_path)
+        motion_scores = [
+            result.frame_change_score
+            for result in analysis_results
+        ]
     except FileNotFoundError as error:
         print(f"Error: {error}")
         return
@@ -54,6 +58,28 @@ def main() -> None:
     maximum_score_index = int(np.argmax(motion_scores))
     maximum_score_frame = maximum_score_index + 2
     maximum_score_time = maximum_score_frame / metadata.fps
+    normalized_scores = [
+        result.brightness_normalized_change
+        for result in analysis_results
+    ]
+
+    maximum_normalized_index = int(np.argmax(normalized_scores))
+
+    maximum_normalized_result = analysis_results[
+        maximum_normalized_index
+    ]
+    
+    normalized_previous_frame, normalized_current_frame = read_frame_pair(
+        video_path=video_path,
+        current_frame_number=maximum_normalized_result.frame_number,
+    )
+
+    save_frame_difference_images(
+        previous_frame=normalized_previous_frame,
+        current_frame=normalized_current_frame,
+        output_directory="outputs",
+        prefix="max_normalized_change",
+    )
 
     previous_frame, current_frame = read_frame_pair(
         video_path=video_path,
@@ -63,14 +89,15 @@ def main() -> None:
         previous_frame=previous_frame,
         current_frame=current_frame,
         output_directory="outputs",
+        prefix="max_change",
     )
 
     
     csv_output_path = "outputs/motion_scores.csv"
     plot_output_path = "outputs/motion_curve.png"
 
-    save_motion_scores_to_csv(
-        motion_scores=motion_scores,
+    save_analysis_results_to_csv(
+        analysis_results=analysis_results,
         fps=metadata.fps,
         output_path=csv_output_path,
     )
@@ -97,6 +124,19 @@ def main() -> None:
     print(f"Motion scores saved to: {csv_output_path}")
     print(f"Motion curve saved to: {plot_output_path}")
     print("Maximum change frame images saved to: outputs")
+    print(
+        "Maximum brightness-normalized change: "
+        f"{maximum_normalized_result.brightness_normalized_change:.2f}"
+    )
+    print(
+        "Maximum normalized change frame: "
+        f"{maximum_normalized_result.frame_number}"
+    )
+    print(
+        "Maximum normalized change time: "
+        f"{maximum_normalized_result.frame_number / metadata.fps:.2f}s"
+    )
+    print("Maximum normalized change frame images saved to: outputs")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,12 @@ from pathlib import Path
 
 import cv2
 
-from src.motion.frame_difference import calculate_frame_difference
+from src.motion.frame_difference import (
+    FrameAnalysis,
+    calculate_brightness_change,
+    calculate_brightness_normalized_difference,
+    calculate_frame_difference,
+)
 
 
 @dataclass
@@ -76,7 +81,9 @@ def count_readable_frames(video_path: str) -> int:
     return readable_frame_count
 
 
-def calculate_video_motion_scores(video_path: str) -> list[float]:
+def analyze_video_frames(
+    video_path: str,
+) -> list[FrameAnalysis]:
     """Calculate frame difference scores for an entire video."""
 
     path = Path(video_path)
@@ -95,7 +102,8 @@ def calculate_video_motion_scores(video_path: str) -> list[float]:
         capture.release()
         raise ValueError(f"Unable to read the first frame: {video_path}")
 
-    motion_scores: list[float] = []
+    analysis_results: list[FrameAnalysis] = []
+    frame_number = 2
 
     while True:
         success, current_frame = capture.read()
@@ -103,17 +111,38 @@ def calculate_video_motion_scores(video_path: str) -> list[float]:
         if not success:
             break
 
-        score = calculate_frame_difference(
+        frame_change_score = calculate_frame_difference(
             previous_frame,
             current_frame,
         )
-        motion_scores.append(score)
+
+        brightness_change = calculate_brightness_change(
+            previous_frame,
+            current_frame,
+        )
+
+        brightness_normalized_change = (
+            calculate_brightness_normalized_difference(
+                previous_frame,
+                current_frame,
+            )
+        )
+
+        analysis_results.append(
+            FrameAnalysis(
+                frame_number=frame_number,
+                frame_change_score=frame_change_score,
+                brightness_change=brightness_change,
+                brightness_normalized_change=brightness_normalized_change,
+            )
+        )
 
         previous_frame = current_frame
+        frame_number += 1
 
     capture.release()
 
-    return motion_scores
+    return analysis_results
 
 def read_frame_pair(
     video_path: str,
@@ -134,15 +163,31 @@ def read_frame_pair(
     if not capture.isOpened():
         raise ValueError(f"Unable to open video file: {video_path}")
 
-    previous_frame_index = current_frame_number - 2
-    capture.set(cv2.CAP_PROP_POS_FRAMES, previous_frame_index)
+    previous_frame = None
+    current_frame = None
+    frame_number = 0
 
-    previous_success, previous_frame = capture.read()
-    current_success, current_frame = capture.read()
+    while frame_number < current_frame_number:
+        success, frame = capture.read()
+
+        if not success:
+            capture.release()
+            raise ValueError(
+                f"Unable to read frame pair ending at frame {current_frame_number}."
+            )
+
+        frame_number += 1
+
+        if frame_number == current_frame_number - 1:
+            previous_frame = frame
+
+        if frame_number == current_frame_number:
+            current_frame = frame
+            break
 
     capture.release()
 
-    if not previous_success or not current_success:
+    if previous_frame is None or current_frame is None:
         raise ValueError(
             f"Unable to read frame pair ending at frame {current_frame_number}."
         )
