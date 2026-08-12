@@ -12,7 +12,10 @@ from src.video.reader import (
     read_frame_pair,
     read_video_metadata,
 )
-from src.visualization.plotter import plot_motion_curve
+from src.visualization.plotter import (
+    plot_comparison_curve,
+    plot_motion_curve,
+)
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -52,7 +55,6 @@ def main() -> None:
         print(f"Error: {error}")
         return
     average_score = float(np.mean(motion_scores))
-    minimum_score = float(np.min(motion_scores))
     maximum_score = float(np.max(motion_scores))
 
     maximum_score_index = int(np.argmax(motion_scores))
@@ -61,6 +63,23 @@ def main() -> None:
     normalized_scores = [
         result.brightness_normalized_change
         for result in analysis_results
+    ]
+    score_differences = [
+        original - normalized
+        for original, normalized in zip(
+            motion_scores,
+            normalized_scores,
+        )
+    ]
+
+    maximum_difference_index = int(np.argmax(score_differences))
+
+    maximum_difference_result = analysis_results[
+        maximum_difference_index
+    ]
+
+    maximum_difference_score = score_differences[
+        maximum_difference_index
     ]
 
     maximum_normalized_index = int(np.argmax(normalized_scores))
@@ -107,37 +126,52 @@ def main() -> None:
         output_path=plot_output_path,
     )
 
+    comparison_output_path = "outputs/comparison_curve.png"
+
+    plot_comparison_curve(
+        motion_scores=motion_scores,
+        normalized_scores=normalized_scores,
+        fps=metadata.fps,
+        output_path=comparison_output_path,
+        highlight_index=maximum_difference_index,
+        normalized_highlight_index=maximum_normalized_index,
+    )
+
     print("Video Motion Analyzer")
     print("---------------------")
+
     print(f"Video path: {metadata.path}")
     print(f"Resolution: {metadata.width} x {metadata.height}")
     print(f"FPS: {metadata.fps:.2f}")
-    print(f"Metadata frame count: {metadata.frame_count}")
-    print(f"Readable frame count: {readable_frame_count}")
     print(f"Duration: {metadata.duration_seconds:.2f} seconds")
-    print(f"Motion score count: {len(motion_scores)}")
+    print(f"Readable frame count: {readable_frame_count}")
+
+    print()
+    print("Analysis Summary")
+    print("----------------")
     print(f"Average frame change score: {average_score:.2f}")
-    print(f"Minimum frame change score: {minimum_score:.2f}")
-    print(f"Maximum frame change score: {maximum_score:.2f}")
-    print(f"Maximum change occurs at frame: {maximum_score_frame}")
-    print(f"Maximum change time: {maximum_score_time:.2f} seconds")
-    print(f"Motion scores saved to: {csv_output_path}")
-    print(f"Motion curve saved to: {plot_output_path}")
-    print("Maximum change frame images saved to: outputs")
     print(
-        "Maximum brightness-normalized change: "
-        f"{maximum_normalized_result.brightness_normalized_change:.2f}"
+        f"Maximum frame change: "
+        f"{maximum_score:.2f} at {maximum_score_time:.2f}s"
     )
     print(
-        "Maximum normalized change frame: "
-        f"{maximum_normalized_result.frame_number}"
-    )
-    print(
-        "Maximum normalized change time: "
+        f"Maximum brightness-normalized change: "
+        f"{maximum_normalized_result.brightness_normalized_change:.2f} "
+        f"at "
         f"{maximum_normalized_result.frame_number / metadata.fps:.2f}s"
     )
-    print("Maximum normalized change frame images saved to: outputs")
+    print(
+        f"Largest normalization difference: "
+        f"{maximum_difference_score:.2f} at "
+        f"{maximum_difference_result.frame_number / metadata.fps:.2f}s"
+    )
 
+    print()
+    print("Outputs")
+    print("-------")
+    print(f"CSV saved to: {csv_output_path}")
+    print(f"Motion curve saved to: {plot_output_path}")
+    print("Frame images saved to: outputs")
 
 if __name__ == "__main__":
     main()
