@@ -2,13 +2,23 @@ import argparse
 
 import numpy as np
 
+from src.events.detector import (
+    build_detected_events,
+    calculate_event_threshold,
+    find_candidate_event_indices,
+    group_candidate_indices,
+    save_events_to_csv,
+)
 from src.motion.frame_difference import (
     save_analysis_results_to_csv,
     save_frame_difference_images,
 )
+from src.shots.detector import (
+    detect_shots,
+    get_boundary_frame_numbers,
+)
 from src.video.reader import (
     analyze_video_frames,
-    count_readable_frames,
     read_frame_pair,
     read_video_metadata,
 )
@@ -42,8 +52,16 @@ def main() -> None:
 
     try:
         metadata = read_video_metadata(video_path)
-        readable_frame_count = count_readable_frames(video_path)
         analysis_results = analyze_video_frames(video_path)
+        shots = detect_shots(video_path)
+        boundary_frame_numbers = get_boundary_frame_numbers(
+            shots
+        )
+        within_shot_results = [
+            result
+            for result in analysis_results
+            if result.frame_number not in boundary_frame_numbers
+        ]
         motion_scores = [
             result.frame_change_score
             for result in analysis_results
@@ -64,6 +82,65 @@ def main() -> None:
         result.brightness_normalized_change
         for result in analysis_results
     ]
+
+    within_shot_normalized_scores = [
+        result.brightness_normalized_change
+        for result in within_shot_results
+    ]
+
+    event_threshold = calculate_event_threshold(
+        within_shot_normalized_scores
+    )
+
+    cut_threshold = calculate_event_threshold(
+        normalized_scores,
+        percentile=99.0,
+    )
+
+    candidate_event_indices = find_candidate_event_indices(
+        normalized_scores,
+        event_threshold,
+    )
+
+    event_groups = group_candidate_indices(
+        candidate_event_indices
+    )
+
+    detected_events = build_detected_events(
+        event_groups,
+        normalized_scores,
+        cut_threshold,
+    )
+
+    top_events = sorted(
+        detected_events,
+        key=lambda event: event.peak_score,
+        reverse=True,
+    )[:5]
+
+    for rank, event in enumerate(top_events, start=1):
+        peak_frame = event.peak_index + 2
+
+        event_previous_frame, event_current_frame = read_frame_pair(
+            video_path=video_path,
+            current_frame_number=peak_frame,
+        )
+
+        save_frame_difference_images(
+            previous_frame=event_previous_frame,
+            current_frame=event_current_frame,
+            output_directory="outputs/top_events",
+            prefix=f"event_{rank}",
+        )
+
+    events_output_path = "outputs/events.csv"
+
+    save_events_to_csv(
+        detected_events=detected_events,
+        fps=metadata.fps,
+        output_path=events_output_path,
+    )
+
     score_differences = [
         original - normalized
         for original, normalized in zip(
@@ -137,6 +214,7 @@ def main() -> None:
         normalized_highlight_index=maximum_normalized_index,
     )
 
+
     print("Video Motion Analyzer")
     print("---------------------")
 
@@ -144,34 +222,56 @@ def main() -> None:
     print(f"Resolution: {metadata.width} x {metadata.height}")
     print(f"FPS: {metadata.fps:.2f}")
     print(f"Duration: {metadata.duration_seconds:.2f} seconds")
-    print(f"Readable frame count: {readable_frame_count}")
 
     print()
     print("Analysis Summary")
     print("----------------")
     print(f"Average frame change score: {average_score:.2f}")
+
     print(
         f"Maximum frame change: "
         f"{maximum_score:.2f} at {maximum_score_time:.2f}s"
     )
+
     print(
         f"Maximum brightness-normalized change: "
         f"{maximum_normalized_result.brightness_normalized_change:.2f} "
         f"at "
         f"{maximum_normalized_result.frame_number / metadata.fps:.2f}s"
     )
+
     print(
         f"Largest normalization difference: "
         f"{maximum_difference_score:.2f} at "
         f"{maximum_difference_result.frame_number / metadata.fps:.2f}s"
     )
 
+    print(
+        f"Event threshold (95th percentile): "
+        f"{event_threshold:.2f}"
+    )
+    print(
+        f"Possible cut threshold (99th percentile): "
+        f"{cut_threshold:.2f}"
+    )
+
     print()
     print("Outputs")
     print("-------")
     print(f"CSV saved to: {csv_output_path}")
+    print(f"Events CSV saved to: {events_output_path}")
     print(f"Motion curve saved to: {plot_output_path}")
     print("Frame images saved to: outputs")
+
+    print(
+        f"Frame pairs before shot filtering: "
+        f"{len(analysis_results)}"
+    )
+
+    print(
+        f"Frame pairs after shot filtering: "
+        f"{len(within_shot_results)}"
+    )
 
 if __name__ == "__main__":
     main()
