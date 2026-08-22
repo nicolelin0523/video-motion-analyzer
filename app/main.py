@@ -5,8 +5,8 @@ import numpy as np
 from src.events.detector import (
     build_detected_events,
     calculate_event_threshold,
-    find_candidate_event_indices,
-    group_candidate_indices,
+    find_event_candidates,
+    group_event_candidates,
     save_events_to_csv,
 )
 from src.motion.frame_difference import (
@@ -92,24 +92,17 @@ def main() -> None:
         within_shot_normalized_scores
     )
 
-    cut_threshold = calculate_event_threshold(
-        normalized_scores,
-        percentile=99.0,
-    )
-
-    candidate_event_indices = find_candidate_event_indices(
-        normalized_scores,
+    event_candidates = find_event_candidates(
+        within_shot_results,
         event_threshold,
     )
 
-    event_groups = group_candidate_indices(
-        candidate_event_indices
+    event_groups = group_event_candidates(
+        event_candidates
     )
 
     detected_events = build_detected_events(
         event_groups,
-        normalized_scores,
-        cut_threshold,
     )
 
     top_events = sorted(
@@ -119,7 +112,7 @@ def main() -> None:
     )[:5]
 
     for rank, event in enumerate(top_events, start=1):
-        peak_frame = event.peak_index + 2
+        peak_frame = event.peak_frame
 
         event_previous_frame, event_current_frame = read_frame_pair(
             video_path=video_path,
@@ -250,10 +243,7 @@ def main() -> None:
         f"Event threshold (95th percentile): "
         f"{event_threshold:.2f}"
     )
-    print(
-        f"Possible cut threshold (99th percentile): "
-        f"{cut_threshold:.2f}"
-    )
+
 
     print()
     print("Outputs")

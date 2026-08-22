@@ -9,11 +9,17 @@ import pandas as pd
 class DetectedEvent:
     """Store information about one detected event."""
 
-    start_index: int
-    end_index: int
-    peak_index: int
+    start_frame: int
+    end_frame: int
+    peak_frame: int
     peak_score: float
-    event_type: str
+
+@dataclass
+class EventCandidate:
+    """Store one candidate frame for event detection."""
+
+    frame_number: int
+    score: float
 
 
 def calculate_event_threshold(
@@ -28,75 +34,79 @@ def calculate_event_threshold(
 
     return threshold
 
-def find_candidate_event_indices(
-    scores: list[float],
+def find_event_candidates(
+    analysis_results,
     threshold: float,
-) -> list[int]:
-    """Find indices whose scores are above the event threshold."""
+) -> list[EventCandidate]:
+    """Find frame analysis results above the event threshold."""
 
-    candidate_indices = []
+    candidates = []
 
-    for index, score in enumerate(scores):
-        if score >= threshold:
-            candidate_indices.append(index)
+    for result in analysis_results:
+        if result.brightness_normalized_change >= threshold:
+            candidates.append(
+                EventCandidate(
+                    frame_number=result.frame_number,
+                    score=result.brightness_normalized_change,
+                )
+            )
 
-    return candidate_indices
+    return candidates
 
-def group_candidate_indices(
-    candidate_indices: list[int],
+def group_event_candidates(
+    candidates: list[EventCandidate],
     max_gap: int = 2,
-) -> list[list[int]]:
-    """Group consecutive candidate indices into events."""
+) -> list[list[EventCandidate]]:
+    """Group nearby event candidates into events."""
 
-    if not candidate_indices:
+    if not candidates:
         return []
 
     groups = []
-    current_group = [candidate_indices[0]]
+    current_group = [candidates[0]]
 
-    for index in candidate_indices[1:]:
-        if index - current_group[-1] <= max_gap:
-            current_group.append(index)
+    for candidate in candidates[1:]:
+        previous_candidate = current_group[-1]
+
+        if (
+            candidate.frame_number
+            - previous_candidate.frame_number
+            <= max_gap
+        ):
+            current_group.append(candidate)
         else:
             groups.append(current_group)
-            current_group = [index]
+            current_group = [candidate]
 
     groups.append(current_group)
 
     return groups
 
 def build_detected_events(
-    event_groups: list[list[int]],
-    scores: list[float],
-    cut_threshold: float,
+    event_groups: list[list[EventCandidate]],
 ) -> list[DetectedEvent]:
-    """Convert grouped candidate indices into detected events."""
+    """Convert grouped event candidates into detected events."""
 
     detected_events = []
 
     for group in event_groups:
-        start_index = group[0]
-        end_index = group[-1]
+        start_frame = group[0].frame_number
+        end_frame = group[-1].frame_number
 
-        peak_index = max(
+        peak_candidate = max(
             group,
-            key=lambda index: scores[index],
+            key=lambda candidate: candidate.score,
         )
 
-        peak_score = scores[peak_index]
-
-        if peak_score >= cut_threshold:
-            event_type = "possible_cut"
-        else:
-            event_type = "motion_candidate"
+        peak_frame = peak_candidate.frame_number
+        peak_score = peak_candidate.score
 
         detected_events.append(
             DetectedEvent(
-                start_index=start_index,
-                end_index=end_index,
-                peak_index=peak_index,
+                start_frame=start_frame,
+                end_frame=end_frame,
+                peak_frame=peak_frame,
                 peak_score=peak_score,
-                event_type=event_type,
             )
         )
 
@@ -118,21 +128,17 @@ def save_events_to_csv(
         detected_events,
         start=1,
     ):
-        start_frame = event.start_index + 2
-        end_frame = event.end_index + 2
-        peak_frame = event.peak_index + 2
 
         rows.append(
             {
                 "event_id": event_id,
-                "start_frame": start_frame,
-                "end_frame": end_frame,
-                "start_time": start_frame / fps,
-                "end_time": end_frame / fps,
-                "peak_frame": peak_frame,
-                "peak_time": peak_frame / fps,
+                "start_frame": event.start_frame,
+                "end_frame": event.end_frame,
+                "start_time": event.start_frame / fps,
+                "end_time": event.end_frame / fps,
+                "peak_frame": event.peak_frame,
+                "peak_time": event.peak_frame / fps,
                 "peak_score": event.peak_score,
-                "event_type": event.event_type,
             }
         )
 
