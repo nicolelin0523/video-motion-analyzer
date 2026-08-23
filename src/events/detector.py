@@ -113,7 +113,7 @@ def build_detected_events(
     return detected_events
 
 def save_events_to_csv(
-    detected_events: list[DetectedEvent],
+    events: list[DetectedEvent],
     fps: float,
     output_path: str,
 ) -> None:
@@ -125,7 +125,7 @@ def save_events_to_csv(
     rows = []
 
     for event_id, event in enumerate(
-        detected_events,
+        events,
         start=1,
     ):
 
@@ -144,3 +144,36 @@ def save_events_to_csv(
 
     dataframe = pd.DataFrame(rows)
     dataframe.to_csv(output, index=False)
+
+def detect_events(
+    analysis_results,
+    percentile: float = 95.0,
+    max_gap: int = 2,
+) -> list[DetectedEvent]:
+    """Detect high-change events from frame analysis results."""
+
+    scores = [
+        result.brightness_normalized_change
+        for result in analysis_results
+    ]
+
+    threshold = calculate_event_threshold(
+        scores,
+        percentile=percentile,
+    )
+
+    candidates = find_event_candidates(
+        analysis_results,
+        threshold,
+    )
+
+    groups = group_event_candidates(
+        candidates,
+        max_gap=max_gap,
+    )
+
+    events  = build_detected_events(
+        groups,
+    )
+
+    return events 

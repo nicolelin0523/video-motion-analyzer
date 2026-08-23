@@ -3,10 +3,7 @@ import argparse
 import numpy as np
 
 from src.events.detector import (
-    build_detected_events,
-    calculate_event_threshold,
-    find_event_candidates,
-    group_event_candidates,
+    detect_events,
     save_events_to_csv,
 )
 from src.motion.frame_difference import (
@@ -83,53 +80,14 @@ def main() -> None:
         for result in analysis_results
     ]
 
-    within_shot_normalized_scores = [
-        result.brightness_normalized_change
-        for result in within_shot_results
-    ]
-
-    event_threshold = calculate_event_threshold(
-        within_shot_normalized_scores
+    events = detect_events(
+        within_shot_results
     )
-
-    event_candidates = find_event_candidates(
-        within_shot_results,
-        event_threshold,
-    )
-
-    event_groups = group_event_candidates(
-        event_candidates
-    )
-
-    detected_events = build_detected_events(
-        event_groups,
-    )
-
-    top_events = sorted(
-        detected_events,
-        key=lambda event: event.peak_score,
-        reverse=True,
-    )[:5]
-
-    for rank, event in enumerate(top_events, start=1):
-        peak_frame = event.peak_frame
-
-        event_previous_frame, event_current_frame = read_frame_pair(
-            video_path=video_path,
-            current_frame_number=peak_frame,
-        )
-
-        save_frame_difference_images(
-            previous_frame=event_previous_frame,
-            current_frame=event_current_frame,
-            output_directory="outputs/top_events",
-            prefix=f"event_{rank}",
-        )
 
     events_output_path = "outputs/events.csv"
 
     save_events_to_csv(
-        detected_events=detected_events,
+        events=events,
         fps=metadata.fps,
         output_path=events_output_path,
     )
@@ -238,12 +196,6 @@ def main() -> None:
         f"{maximum_difference_score:.2f} at "
         f"{maximum_difference_result.frame_number / metadata.fps:.2f}s"
     )
-
-    print(
-        f"Event threshold (95th percentile): "
-        f"{event_threshold:.2f}"
-    )
-
 
     print()
     print("Outputs")
