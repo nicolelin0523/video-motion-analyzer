@@ -52,3 +52,21 @@ def get_boundary_frame_numbers(
         boundary_frame_numbers.add(boundary_frame_number)
 
     return boundary_frame_numbers
+
+def filter_shot_boundary_results(
+    analysis_results,
+    shots: list[Shot],
+):
+    """Remove frame analysis results that cross shot boundaries."""
+
+    boundary_frame_numbers = get_boundary_frame_numbers(
+        shots
+    )
+
+    within_shot_results = [
+        result
+        for result in analysis_results
+        if result.frame_number not in boundary_frame_numbers
+    ]
+
+    return within_shot_results

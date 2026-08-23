@@ -1,6 +1,7 @@
 import argparse
 
 import numpy as np
+from src.output.reporter import print_analysis_summary
 
 from src.events.detector import (
     detect_events,
@@ -12,7 +13,7 @@ from src.motion.frame_difference import (
 )
 from src.shots.detector import (
     detect_shots,
-    get_boundary_frame_numbers,
+    filter_shot_boundary_results,
 )
 from src.video.reader import (
     analyze_video_frames,
@@ -51,14 +52,10 @@ def main() -> None:
         metadata = read_video_metadata(video_path)
         analysis_results = analyze_video_frames(video_path)
         shots = detect_shots(video_path)
-        boundary_frame_numbers = get_boundary_frame_numbers(
-            shots
+        within_shot_results = filter_shot_boundary_results(
+            analysis_results,
+            shots,
         )
-        within_shot_results = [
-            result
-            for result in analysis_results
-            if result.frame_number not in boundary_frame_numbers
-        ]
         motion_scores = [
             result.frame_change_score
             for result in analysis_results
@@ -166,53 +163,24 @@ def main() -> None:
     )
 
 
-    print("Video Motion Analyzer")
-    print("---------------------")
-
-    print(f"Video path: {metadata.path}")
-    print(f"Resolution: {metadata.width} x {metadata.height}")
-    print(f"FPS: {metadata.fps:.2f}")
-    print(f"Duration: {metadata.duration_seconds:.2f} seconds")
-
-    print()
-    print("Analysis Summary")
-    print("----------------")
-    print(f"Average frame change score: {average_score:.2f}")
-
-    print(
-        f"Maximum frame change: "
-        f"{maximum_score:.2f} at {maximum_score_time:.2f}s"
-    )
-
-    print(
-        f"Maximum brightness-normalized change: "
-        f"{maximum_normalized_result.brightness_normalized_change:.2f} "
-        f"at "
-        f"{maximum_normalized_result.frame_number / metadata.fps:.2f}s"
-    )
-
-    print(
-        f"Largest normalization difference: "
-        f"{maximum_difference_score:.2f} at "
-        f"{maximum_difference_result.frame_number / metadata.fps:.2f}s"
-    )
-
-    print()
-    print("Outputs")
-    print("-------")
-    print(f"CSV saved to: {csv_output_path}")
-    print(f"Events CSV saved to: {events_output_path}")
-    print(f"Motion curve saved to: {plot_output_path}")
-    print("Frame images saved to: outputs")
-
-    print(
-        f"Frame pairs before shot filtering: "
-        f"{len(analysis_results)}"
-    )
-
-    print(
-        f"Frame pairs after shot filtering: "
-        f"{len(within_shot_results)}"
+    print_analysis_summary(
+        metadata=metadata,
+        average_score=average_score,
+        maximum_score=maximum_score,
+        maximum_score_time=maximum_score_time,
+        maximum_normalized_score=(
+            maximum_normalized_result.brightness_normalized_change
+        ),
+        maximum_normalized_time=(
+            maximum_normalized_result.frame_number / metadata.fps
+        ),
+        maximum_difference_score=maximum_difference_score,
+        maximum_difference_time=(
+            maximum_difference_result.frame_number / metadata.fps
+        ),
+        csv_output_path=csv_output_path,
+        events_output_path=events_output_path,
+        plot_output_path=plot_output_path,
     )
 
 if __name__ == "__main__":
