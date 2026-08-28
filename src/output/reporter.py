@@ -10,6 +10,7 @@ def print_analysis_summary(
     csv_output_path: str,
     events_output_path: str,
     plot_output_path: str,
+    shot_analysis_output_path: str,
 ) -> None:
     """Print a summary of the video analysis results."""
 
@@ -44,5 +45,6 @@ def print_analysis_summary(
     print("-------")
     print(f"CSV saved to: {csv_output_path}")
     print(f"Events CSV saved to: {events_output_path}")
+    print(f"Shot analysis CSV saved to: {shot_analysis_output_path}")
     print(f"Motion curve saved to: {plot_output_path}")
     print("Frame images saved to: outputs")

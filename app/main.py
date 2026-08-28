@@ -11,6 +11,10 @@ from src.motion.frame_difference import (
     save_frame_difference_images,
 )
 from src.output.reporter import print_analysis_summary
+from src.shots.analyzer import (
+    analyze_all_shots,
+    save_shot_analyses_to_csv,
+)
 from src.shots.detector import (
     detect_shots,
     filter_shot_boundary_results,
@@ -90,6 +94,20 @@ def main() -> None:
         within_shot_results
     )
 
+    shot_analyses = analyze_all_shots(
+        shots=shots,
+        analysis_results=analysis_results,
+        events=events,
+        fps=metadata.fps,
+    )
+
+    shot_analysis_output_path = "outputs/shot_analysis.csv"
+
+    save_shot_analyses_to_csv(
+        shot_analyses=shot_analyses,
+        output_path=shot_analysis_output_path,
+    )
+    
     events_output_path = "outputs/events.csv"
 
     save_events_to_csv(
@@ -193,6 +211,7 @@ def main() -> None:
         ),
         csv_output_path=csv_output_path,
         events_output_path=events_output_path,
+        shot_analysis_output_path=shot_analysis_output_path,
         plot_output_path=plot_output_path,
     )
 
