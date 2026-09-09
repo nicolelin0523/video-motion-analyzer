@@ -2,6 +2,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Patch
 
 
 def plot_motion_curve(
@@ -130,4 +131,142 @@ def plot_comparison_curve(
     plt.tight_layout()
 
     plt.savefig(output, dpi=150)
+    plt.close()
+
+def plot_shot_motion_scores(
+    shot_analyses,
+    output_path: str,
+) -> None:
+    """Plot average motion score for each shot."""
+
+    shot_ids = [
+        shot_analysis.shot_id
+        for shot_analysis in shot_analyses
+    ]
+
+    average_scores = [
+        shot_analysis.average_motion_score
+        for shot_analysis in shot_analyses
+    ]
+
+    motion_levels = [
+        shot_analysis.motion_level
+        for shot_analysis in shot_analyses
+    ]
+
+    level_to_color = {
+        "Low": "tab:blue",
+        "Medium": "tab:orange",
+        "High": "tab:red",
+        "N/A": "tab:gray",
+    }
+
+    bar_colors = [
+        level_to_color[level]
+        for level in motion_levels
+    ]
+
+    plt.figure(figsize=(12, 6))
+
+    plt.bar(
+        shot_ids,
+        average_scores,
+        color=bar_colors,
+    )
+
+    plt.xlabel("Shot ID")
+    plt.ylabel("Average Motion Score")
+    plt.title("Average Motion Score by Shot")
+
+    legend_handles = [
+        Patch(color="tab:blue", label="Low"),
+        Patch(color="tab:orange", label="Medium"),
+        Patch(color="tab:red", label="High"),
+        Patch(color="tab:gray", label="N/A"),
+    ]
+    plt.legend(handles=legend_handles)
+
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+def plot_shot_motion_and_events(
+    shot_analyses,
+    output_path: str,
+) -> None:
+    """Plot average motion score and event rate for each shot."""
+
+    shot_ids = [
+        shot_analysis.shot_id
+        for shot_analysis in shot_analyses
+    ]
+
+    average_scores = [
+        shot_analysis.average_motion_score
+        for shot_analysis in shot_analyses
+    ]
+
+    event_rates = [
+        shot_analysis.event_rate
+        for shot_analysis in shot_analyses
+    ]
+
+    figure, left_axis = plt.subplots(figsize=(12, 6))
+
+    left_axis.bar(
+        shot_ids,
+        average_scores,
+        alpha=0.7,
+        label="Average Motion Score",
+    )
+
+    left_axis.set_xlabel("Shot ID")
+    left_axis.set_ylabel("Average Motion Score")
+
+    right_axis = left_axis.twinx()
+
+    right_axis.plot(
+        shot_ids,
+        event_rates,
+        marker="o",
+        label="Event Rate",
+    )
+
+    right_axis.set_ylabel("Event Rate (events/second)")
+
+    plt.title("Shot Motion Score and Event Rate")
+
+    figure.tight_layout()
+    figure.savefig(output_path)
+    plt.close(figure)
+
+def plot_shot_event_rates(
+    shot_analyses,
+    output_path: str,
+) -> None:
+    """Plot event rate for each shot."""
+
+    shot_ids = [
+        shot_analysis.shot_id
+        for shot_analysis in shot_analyses
+    ]
+
+    event_rates = [
+        shot_analysis.event_rate
+        for shot_analysis in shot_analyses
+    ]
+
+    plt.figure(figsize=(12, 6))
+
+    plt.bar(
+        shot_ids,
+        event_rates,
+    )
+
+    plt.xlabel("Shot ID")
+    plt.ylabel("Event Rate (events/second)")
+    plt.title("Event Rate by Shot")
+
+    plt.tight_layout()
+    plt.savefig(output_path)
     plt.close()

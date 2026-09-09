@@ -17,6 +17,7 @@ class ShotAnalysis:
     maximum_motion_score: float
     event_count: int
     motion_level: str
+    event_rate: float
 
 def get_shot_analysis_results(
     shot,
@@ -58,6 +59,7 @@ def analyze_shot(
             maximum_motion_score=0.0,
             event_count=0,
             motion_level="N/A",
+            event_rate=0.0,
         )
 
     normalized_scores = [
@@ -78,6 +80,8 @@ def analyze_shot(
         shot.end_frame - shot.start_frame + 1
     ) / fps
 
+    event_rate = event_count / duration_seconds
+
     return ShotAnalysis(
         shot_id=shot.shot_id,
         start_frame=shot.start_frame,
@@ -87,6 +91,7 @@ def analyze_shot(
         maximum_motion_score=maximum_motion_score,
         event_count=event_count,
         motion_level="Unclassified",
+        event_rate=event_rate,
     )
 
 def analyze_all_shots(
@@ -135,6 +140,7 @@ def save_shot_analyses_to_csv(
                 "maximum_motion_score": shot_analysis.maximum_motion_score,
                 "event_count": shot_analysis.event_count,
                 "motion_level": shot_analysis.motion_level, 
+                "event_rate": shot_analysis.event_rate,
             }
         )
 

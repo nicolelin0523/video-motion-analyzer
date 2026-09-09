@@ -27,6 +27,8 @@ from src.video.reader import (
 from src.visualization.plotter import (
     plot_comparison_curve,
     plot_motion_curve,
+    plot_shot_event_rates,
+    plot_shot_motion_scores,
 )
 
 
@@ -99,6 +101,20 @@ def main() -> None:
         analysis_results=analysis_results,
         events=events,
         fps=metadata.fps,
+    )
+
+    shot_event_rate_plot_path = "outputs/shot_event_rates.png"
+
+    plot_shot_event_rates(
+        shot_analyses=shot_analyses,
+        output_path=shot_event_rate_plot_path,
+    )
+
+    shot_motion_plot_path = "outputs/shot_motion_scores.png"
+
+    plot_shot_motion_scores(
+        shot_analyses=shot_analyses,
+        output_path=shot_motion_plot_path,
     )
 
     shot_analysis_output_path = "outputs/shot_analysis.csv"
