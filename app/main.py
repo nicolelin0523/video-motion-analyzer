@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import numpy as np
 
@@ -10,6 +11,9 @@ from src.motion.frame_difference import (
     save_analysis_results_to_csv,
     save_frame_difference_images,
 )
+from src.motion.optical_flow import (
+    calculate_shot_motion_magnitudes,
+)
 from src.output.reporter import print_analysis_summary
 from src.shots.analyzer import (
     analyze_all_shots,
@@ -18,6 +22,10 @@ from src.shots.analyzer import (
 from src.shots.detector import (
     detect_shots,
     filter_shot_boundary_results,
+)
+from src.shots.motion_context import (
+    build_shot_motion_context,
+    save_shot_motion_contexts_to_csv,
 )
 from src.video.reader import (
     analyze_video_frames,
@@ -28,7 +36,9 @@ from src.visualization.plotter import (
     plot_comparison_curve,
     plot_motion_curve,
     plot_shot_event_rates,
+    plot_shot_motion_magnitude,
     plot_shot_motion_scores,
+    plot_shot_motion_stability,
 )
 
 
@@ -61,6 +71,65 @@ def main() -> None:
 
         # 偵測 shot，並排除跨 shot 的 frame pair
         shots = detect_shots(video_path)
+
+        shot_motion_contexts = []
+
+        for shot in shots:
+            magnitudes = calculate_shot_motion_magnitudes(
+                video_path,
+                shot.start_frame,
+                shot.end_frame,
+            )
+
+            if not magnitudes:
+                continue
+
+            context = build_shot_motion_context(
+                shot_id=shot.shot_id,
+                start_frame=shot.start_frame,
+                end_frame=shot.end_frame,
+                magnitudes=magnitudes,
+            )
+
+            shot_motion_contexts.append(context)
+        #出motion context的CSV
+        output_path = Path("outputs/shot_motion_context.csv")
+
+        save_shot_motion_contexts_to_csv(
+            shot_motion_contexts,
+            output_path,
+        )
+
+        print(f"Shot motion context CSV saved to: {output_path}")
+        #畫圖magnitude
+        magnitude_plot_path = Path(
+            "outputs/shot_motion_magnitude.png"
+        )
+
+        plot_shot_motion_magnitude(
+            shot_motion_contexts,
+            magnitude_plot_path,
+        )
+
+        print(
+            f"Shot motion magnitude plot saved to: "
+            f"{magnitude_plot_path}"
+        )
+
+        stability_plot_path = Path(
+            "outputs/shot_motion_stability.png"
+        )
+
+        plot_shot_motion_stability(
+            shot_motion_contexts,
+            stability_plot_path,
+        )
+
+        print(
+            f"Shot motion stability plot saved to: "
+            f"{stability_plot_path}"
+        )
+                
         within_shot_results = filter_shot_boundary_results(
             analysis_results,
             shots,

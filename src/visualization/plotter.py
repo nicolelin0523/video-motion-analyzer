@@ -270,3 +270,67 @@ def plot_shot_event_rates(
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
+
+def plot_shot_motion_magnitude(
+    contexts,
+    output_path,
+) -> None:
+    shot_ids = [
+        context.shot_id
+        for context in contexts
+    ]
+
+    motion_magnitudes = [
+        context.motion_magnitude
+        for context in contexts
+    ]
+
+    plt.figure(figsize=(12, 6))
+
+    plt.plot(
+        shot_ids,
+        motion_magnitudes,
+        marker="o",
+    )
+
+    plt.xlabel("Shot ID")
+    plt.ylabel("Motion Magnitude")
+    plt.title("Shot-level Motion Magnitude")
+
+    plt.grid(True)
+    plt.tight_layout()
+
+    plt.savefig(output_path)
+    plt.close()
+
+def plot_shot_motion_stability(
+    contexts,
+    output_path,
+) -> None:
+    shot_ids = [
+        context.shot_id
+        for context in contexts
+    ]
+
+    adjacent_changes = [
+        context.mean_adjacent_change
+        for context in contexts
+    ]
+
+    plt.figure(figsize=(12, 6))
+
+    plt.plot(
+        shot_ids,
+        adjacent_changes,
+        marker="o",
+    )
+
+    plt.xlabel("Shot ID")
+    plt.ylabel("Mean Adjacent Change")
+    plt.title("Shot-level Motion Stability")
+
+    plt.grid(True)
+    plt.tight_layout()
+
+    plt.savefig(output_path)
+    plt.close()
