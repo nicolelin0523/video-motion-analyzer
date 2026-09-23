@@ -37,8 +37,6 @@ The system reads basic video information, including:
 - Total number of frames
 - Video duration
 
----
-
 ### 2. Frame Difference Analysis
 
 Frame-to-frame visual changes are measured using pixel differences.
@@ -51,8 +49,6 @@ The system can calculate:
 
 This provides a simple way to observe where noticeable visual changes occur in the video.
 
----
-
 ### 3. Motion Event Detection
 
 Motion events are detected based on a motion-score threshold.
@@ -64,8 +60,6 @@ The system can:
 - Rank motion events by motion intensity
 
 This allows the user to quickly locate important motion segments within a video.
-
----
 
 ### 4. Shot Detection
 
@@ -82,8 +76,6 @@ Detected shot information includes:
 - End frame
 - Shot duration
 
----
-
 ### 5. Optical Flow Analysis
 
 Optical flow is used to estimate motion between consecutive frames.
@@ -91,8 +83,6 @@ Optical flow is used to estimate motion between consecutive frames.
 The current implementation uses **Farneback Optical Flow** from OpenCV.
 
 For each pair of frames, the system calculates an optical flow magnitude representing the amount of motion between the two frames.
-
----
 
 ### 6. Shot-Level Motion Context
 
@@ -190,7 +180,7 @@ Frame-Level Analysis      Optical Flow Analysis
                                   |
                                   v
                     CSV / Plot / Video Outputs
-````
+```
 
 ---
 
@@ -272,9 +262,9 @@ Exports shot-level motion analysis results to a CSV file.
 
 Additional functions support:
 
-* Motion magnitude visualization
-* Motion stability visualization
-* Shot clip exporting
+- Motion magnitude visualization
+- Motion stability visualization
+- Shot clip exporting
 
 ---
 
@@ -290,17 +280,15 @@ outputs/shot_motion_context.csv
 
 Example columns:
 
-| Column                 | Description                                      |
-| ---------------------- | ------------------------------------------------ |
-| `shot_id`              | Shot identifier                                  |
-| `start_frame`          | First frame of the shot                          |
-| `end_frame`            | Last frame of the shot                           |
-| `num_pairs`            | Number of frame pairs                            |
-| `motion_magnitude`     | Average motion intensity                         |
-| `motion_std`           | Motion variation                                 |
+| Column | Description |
+| --- | --- |
+| `shot_id` | Shot identifier |
+| `start_frame` | First frame of the shot |
+| `end_frame` | Last frame of the shot |
+| `num_pairs` | Number of frame pairs |
+| `motion_magnitude` | Average motion intensity |
+| `motion_std` | Motion variation |
 | `mean_adjacent_change` | Average change between consecutive motion values |
-
----
 
 ### Motion Magnitude Plot
 
@@ -310,8 +298,6 @@ outputs/shot_motion_magnitude.png
 
 Visualizes the overall motion intensity of different shots.
 
----
-
 ### Motion Stability Plot
 
 ```text
@@ -319,8 +305,6 @@ outputs/shot_motion_stability.png
 ```
 
 Visualizes motion stability across shots.
-
----
 
 ### Shot Clips
 
@@ -338,17 +322,17 @@ This allows quantitative results to be checked against the actual video content.
 
 Example shot-level motion analysis:
 
-| Shot    | Motion Magnitude | Motion STD | Mean Adjacent Change | Motion Characteristic          |
-| ------- | ---------------: | ---------: | -------------------: | ------------------------------ |
-| Shot 2  |           0.0036 |     0.0044 |               0.0022 | Low motion, stable             |
-| Shot 20 |           1.9601 |          - |               0.1772 | High motion, relatively stable |
-| Shot 24 |           5.6907 |          - |               1.6612 | High motion, unstable          |
+| Shot | Motion Magnitude | Motion STD | Mean Adjacent Change | Motion Characteristic |
+| --- | ---: | ---: | ---: | --- |
+| Shot 2 | 0.0036 | 0.0044 | 0.0022 | Low motion, stable |
+| Shot 20 | 1.9601 | - | 0.1772 | High motion, relatively stable |
+| Shot 24 | 5.6907 | - | 1.6612 | High motion, unstable |
 
 Example interpretation:
 
-* **Shot 2** contains only small local motion and remains relatively stable.
-* **Shot 20** contains stronger motion but changes smoothly over time.
-* **Shot 24** contains large and rapidly changing motion.
+- **Shot 2** contains only small local motion and remains relatively stable.
+- **Shot 20** contains stronger motion but changes smoothly over time.
+- **Shot 24** contains large and rapidly changing motion.
 
 These examples demonstrate that the calculated motion features can describe different motion characteristics across video shots.
 
@@ -358,14 +342,14 @@ These examples demonstrate that the calculated motion features can describe diff
 
 The project currently uses:
 
-* Python
-* OpenCV
-* NumPy
-* Pandas
-* Matplotlib
-* PySceneDetect
-* Git
-* GitHub
+- Python
+- OpenCV
+- NumPy
+- Pandas
+- Matplotlib
+- PySceneDetect
+- Git
+- GitHub
 
 ---
 
@@ -435,16 +419,16 @@ The core video analysis pipeline is functional.
 
 The current version supports:
 
-* Video information extraction
-* Frame difference analysis
-* Motion event detection
-* Shot detection
-* Optical flow analysis
-* Shot-level motion magnitude calculation
-* Shot-level motion stability analysis
-* CSV result export
-* Motion visualization
-* Shot clip export
+- Video information extraction
+- Frame difference analysis
+- Motion event detection
+- Shot detection
+- Optical flow analysis
+- Shot-level motion magnitude calculation
+- Shot-level motion stability analysis
+- CSV result export
+- Motion visualization
+- Shot clip export
 
 The project is currently being extended toward more advanced temporal video analysis.
 
@@ -456,13 +440,13 @@ Future development will focus on using shot information to improve temporal proc
 
 Possible directions include:
 
-* Shot-boundary-aware temporal reset
-* Shot-level motion context for processing decisions
-* Temporal information reuse
-* Dynamic processing intervals
-* Reducing unnecessary optical flow computation
-* Integration with modern optical flow models
-* Comparison between traditional and deep-learning-based optical flow methods
+- Shot-boundary-aware temporal reset
+- Shot-level motion context for processing decisions
+- Temporal information reuse
+- Dynamic processing intervals
+- Reducing unnecessary optical flow computation
+- Integration with modern optical flow models
+- Comparison between traditional and deep-learning-based optical flow methods
 
 The long-term goal is to explore how shot-level motion information can be used to make video motion analysis more efficient and temporally consistent.
 
@@ -478,12 +462,12 @@ By introducing shot-level motion context, this project explores whether video pr
 
 This project also serves as a practical implementation environment for experimenting with:
 
-* Computer vision
-* Video processing
-* Optical flow
-* Motion analysis
-* Modular Python development
-* Data visualization
+- Computer vision
+- Video processing
+- Optical flow
+- Motion analysis
+- Modular Python development
+- Data visualization
 
 ---
 
@@ -491,22 +475,16 @@ This project also serves as a practical implementation environment for experimen
 
 **Nicole Lin**
 
-Graduate Student
-Department of Computer Science and Information Engineering
+Graduate Student  
+Department of Computer Science and Information Engineering  
 National University of Tainan
 
-GitHub:
-
-```text
+GitHub:  
 https://github.com/nicolelin0523
-```
 
 ---
 
 ## Repository
 
-```text
 https://github.com/nicolelin0523/video-motion-analyzer
-```
-
-
+````
