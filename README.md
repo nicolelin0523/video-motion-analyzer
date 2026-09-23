@@ -1,159 +1,413 @@
+````md
 # Video Motion Analyzer
 
-A Python side project for analyzing visual changes and motion-related information in videos.
+A Python-based video analysis project for extracting and analyzing motion-related information from videos.
+
+This project combines **frame-level visual change analysis**, **shot detection**, and **optical-flow-based motion analysis** to build a structured video processing pipeline.
+
+The current focus is on analyzing motion characteristics within individual shots and providing quantitative features that can be used for further video understanding and motion-aware processing.
+
+---
 
 ## Project Overview
 
-Video Motion Analyzer is a beginner-friendly Python project for analyzing changes between video frames.
+Video contains different types of motion across different shots.
 
-The project currently analyzes adjacent video frames using frame differences, brightness changes, and brightness-normalized differences. It also uses shot detection to avoid treating scene transitions as ordinary within-shot motion events.
+Some shots may contain only small local movement, while others may include large object motion, camera movement, or rapid changes.
 
-The goal of this project is to gradually build a structured video analysis pipeline while practicing Python project organization, modular design, Git, data analysis, and computer vision.
+The goal of this project is to:
 
-## Current Features
+- Detect shot boundaries in a video
+- Analyze frame-level visual changes
+- Measure motion information using optical flow
+- Build shot-level motion summaries
+- Visualize and export motion analysis results
+- Provide a modular pipeline for future motion-aware video processing
 
-- Read video metadata
-  - Resolution
-  - FPS
-  - Frame count
-  - Duration
-- Read and analyze adjacent video frames
-- Calculate original frame difference scores
-- Calculate brightness changes
-- Calculate brightness-normalized frame differences
-- Detect video shots using PySceneDetect
-- Remove frame pairs that cross shot boundaries
-- Detect high-change events within shots
-- Export frame analysis results to CSV
-- Export detected events to CSV
-- Save important frame pairs and difference images
-- Generate motion score curves
-- Compare original and brightness-normalized motion curves
-- Display an analysis summary in the terminal
-- Command-line video input
-- Basic error handling
+---
+
+## Key Features
+
+### 1. Video Information Extraction
+
+The system reads basic video information, including:
+
+- Resolution
+- FPS
+- Total number of frames
+- Video duration
+
+---
+
+### 2. Frame Difference Analysis
+
+Frame-to-frame visual changes are measured using pixel differences.
+
+The system can calculate:
+
+- Raw frame difference
+- Normalized motion score
+- Motion curve over time
+
+This provides a simple way to observe where noticeable visual changes occur in the video.
+
+---
+
+### 3. Motion Event Detection
+
+Motion events are detected based on a motion-score threshold.
+
+The system can:
+
+- Identify high-motion candidate frames
+- Group neighboring candidates into motion events
+- Rank motion events by motion intensity
+
+This allows the user to quickly locate important motion segments within a video.
+
+---
+
+### 4. Shot Detection
+
+The project uses **PySceneDetect** to divide a video into individual shots.
+
+Each shot contains a continuous sequence of frames without a major scene transition.
+
+Shot detection is useful because motion characteristics are often more consistent within the same shot than across different shots.
+
+Detected shot information includes:
+
+- Shot ID
+- Start frame
+- End frame
+- Shot duration
+
+---
+
+### 5. Optical Flow Analysis
+
+Optical flow is used to estimate motion between consecutive frames.
+
+The current implementation uses **Farneback Optical Flow** from OpenCV.
+
+For each pair of frames, the system calculates an optical flow magnitude representing the amount of motion between the two frames.
+
+---
+
+### 6. Shot-Level Motion Context
+
+Instead of analyzing motion only at the frame level, the system summarizes motion information for each shot.
+
+For every shot, the following features are calculated:
+
+#### Motion Magnitude
+
+Represents the overall motion intensity of the shot.
+
+It is calculated from the average optical-flow magnitude across all consecutive frame pairs inside the shot.
+
+#### Motion Stability — Standard Deviation
+
+Measures how much the motion intensity varies within the shot.
+
+A lower value indicates that motion remains relatively stable.
+
+A higher value indicates larger motion variation.
+
+#### Mean Adjacent Change
+
+Measures the average difference in motion magnitude between consecutive frame pairs.
+
+This feature describes how quickly the motion state changes over time.
+
+---
+
+## Example Motion Characteristics
+
+Using the shot-level motion features, different types of shots can be observed.
+
+### Low Motion + Stable
+
+Example:
+
+- Small local object movement
+- Mostly static camera
+- Low Motion Magnitude
+- Low Mean Adjacent Change
+
+### High Motion + Relatively Stable
+
+Example:
+
+- Continuous forward movement
+- Consistent camera movement
+- High Motion Magnitude
+- Relatively low Mean Adjacent Change
+
+### High Motion + Unstable
+
+Example:
+
+- Moving person combined with camera motion
+- Rapid motion variation
+- High Motion Magnitude
+- High Mean Adjacent Change
+
+These features allow motion characteristics to be quantitatively compared with the actual video content.
+
+---
 
 ## Analysis Pipeline
 
 ```text
 Input Video
-    ↓
-Read Video Metadata
-    ↓
-Analyze Adjacent Frames
-    ↓
-Calculate Frame Change Scores
-    ↓
-Detect Shots
-    ↓
-Remove Cross-Shot Frame Pairs
-    ↓
-Detect High-Change Events Within Shots
-    ↓
-Export CSV / Images / Visualizations
-    ↓
-Display Analysis Summary
-```
+    |
+    v
+Video Information Extraction
+    |
+    v
+Frame Difference Analysis
+    |
+    v
+Motion Event Detection
+    |
+    v
+Shot Detection
+    |
+    v
+Shot-Level Processing
+    |
+    +-----------------------------+
+    |                             |
+    v                             v
+Frame-Level Analysis      Optical Flow Analysis
+                                  |
+                                  v
+                       Shot Motion Magnitudes
+                                  |
+                                  v
+                       Shot Motion Context
+                                  |
+                                  v
+                    CSV / Plot / Video Outputs
+````
+
+---
 
 ## Project Structure
 
 ```text
 video-motion-analyzer/
+│
 ├── app/
-│   ├── __init__.py
 │   └── main.py
+│
 ├── src/
-│   ├── __init__.py
-│   ├── video/
-│   │   ├── __init__.py
-│   │   └── reader.py
 │   ├── motion/
-│   │   ├── __init__.py
-│   │   └── frame_difference.py
-│   ├── shots/
-│   │   ├── __init__.py
-│   │   └── detector.py
-│   ├── events/
-│   │   ├── __init__.py
-│   │   └── detector.py
+│   │   └── optical_flow.py
+│   │
 │   ├── visualization/
-│   │   ├── __init__.py
 │   │   └── plotter.py
-│   └── output/
-│       ├── __init__.py
-│       └── reporter.py
-├── tests/
-│   └── __init__.py
+│   │
+│   └── ...
+│
 ├── data/
-│   └── .gitkeep
+│   └── sample.mp4
+│
 ├── outputs/
-│   └── .gitkeep
-├── .gitignore
+│   ├── shot_motion_context.csv
+│   ├── shot_motion_magnitude.png
+│   ├── shot_motion_stability.png
+│   └── shot_*.mp4
+│
 ├── README.md
+│
 └── requirements.txt
 ```
 
-## Module Responsibilities
+> The project structure may continue to evolve as new modules are added.
 
-### `app/`
+---
 
-Contains the application entry point.
+## Core Modules
 
-`main.py` connects the different modules and controls the overall analysis pipeline.
+### Optical Flow
 
-### `src/video/`
+`src/motion/optical_flow.py`
 
-Handles video reading and metadata extraction.
+Main functions include:
 
-### `src/motion/`
+```python
+calculate_optical_flow_magnitude(frame1, frame2)
+```
 
-Calculates frame-based visual change measurements, including:
+Calculates the optical-flow magnitude between two frames.
 
-- Frame difference
-- Brightness change
-- Brightness-normalized difference
+```python
+calculate_shot_motion_magnitudes(
+    video_path,
+    start_frame,
+    end_frame,
+)
+```
 
-### `src/shots/`
+Calculates optical-flow magnitudes for all consecutive frame pairs within a shot.
 
-Detects shot boundaries using PySceneDetect and removes frame pairs that cross between different shots.
+```python
+build_shot_motion_context(
+    shot_id,
+    start_frame,
+    end_frame,
+    magnitudes,
+)
+```
 
-### `src/events/`
+Builds shot-level motion features.
 
-Detects high-change intervals from brightness-normalized frame analysis results within shots.
+```python
+save_shot_motion_contexts_to_csv(...)
+```
 
-### `src/visualization/`
+Exports shot-level motion analysis results to a CSV file.
 
-Generates motion curves and comparison visualizations.
+Additional functions support:
 
-### `src/output/`
+* Motion magnitude visualization
+* Motion stability visualization
+* Shot clip exporting
 
-Handles terminal output and displays the analysis summary.
+---
+
+## Output Files
+
+The analysis results are stored in the `outputs/` directory.
+
+### Shot Motion Context
+
+```text
+outputs/shot_motion_context.csv
+```
+
+Example columns:
+
+| Column                 | Description                                      |
+| ---------------------- | ------------------------------------------------ |
+| `shot_id`              | Shot identifier                                  |
+| `start_frame`          | First frame of the shot                          |
+| `end_frame`            | Last frame of the shot                           |
+| `num_pairs`            | Number of frame pairs                            |
+| `motion_magnitude`     | Average motion intensity                         |
+| `motion_std`           | Motion variation                                 |
+| `mean_adjacent_change` | Average change between consecutive motion values |
+
+---
+
+### Motion Magnitude Plot
+
+```text
+outputs/shot_motion_magnitude.png
+```
+
+Visualizes the overall motion intensity of different shots.
+
+---
+
+### Motion Stability Plot
+
+```text
+outputs/shot_motion_stability.png
+```
+
+Visualizes motion stability across shots.
+
+---
+
+### Shot Clips
+
+```text
+outputs/shot_<id>_<start>_<end>.mp4
+```
+
+Individual shot clips can be exported for visual comparison with the calculated motion features.
+
+This allows quantitative results to be checked against the actual video content.
+
+---
+
+## Example Shot Analysis
+
+Example shot-level motion analysis:
+
+| Shot    | Motion Magnitude | Motion STD | Mean Adjacent Change | Motion Characteristic          |
+| ------- | ---------------: | ---------: | -------------------: | ------------------------------ |
+| Shot 2  |           0.0036 |     0.0044 |               0.0022 | Low motion, stable             |
+| Shot 20 |           1.9601 |          - |               0.1772 | High motion, relatively stable |
+| Shot 24 |           5.6907 |          - |               1.6612 | High motion, unstable          |
+
+Example interpretation:
+
+* **Shot 2** contains only small local motion and remains relatively stable.
+* **Shot 20** contains stronger motion but changes smoothly over time.
+* **Shot 24** contains large and rapidly changing motion.
+
+These examples demonstrate that the calculated motion features can describe different motion characteristics across video shots.
+
+---
+
+## Technologies
+
+The project currently uses:
+
+* Python
+* OpenCV
+* NumPy
+* Pandas
+* Matplotlib
+* PySceneDetect
+* Git
+* GitHub
+
+---
 
 ## Installation
 
-### 1. Create a virtual environment
+Clone the repository:
+
+```bash
+git clone https://github.com/nicolelin0523/video-motion-analyzer.git
+```
+
+Move into the project directory:
+
+```bash
+cd video-motion-analyzer
+```
+
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-### 2. Activate the virtual environment
+Activate the environment.
 
-On Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 .venv\Scripts\Activate.ps1
 ```
 
-### 3. Install required packages
+Install the required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ## Usage
 
-Place a video file in the `data/` folder.
+Place the input video inside the `data/` directory.
 
 For example:
 
@@ -161,94 +415,98 @@ For example:
 data/sample.mp4
 ```
 
-Run the project from the project root:
+Run the main program:
 
 ```bash
-python -m app.main --video data/sample.mp4
+python app/main.py
 ```
 
-## Outputs
-
-The analysis results are stored in the `outputs/` folder.
-
-Current outputs include:
+After execution, analysis results will be generated inside:
 
 ```text
 outputs/
-├── motion_scores.csv
-├── events.csv
-├── motion_curve.png
-├── comparison_curve.png
-├── max_change_previous.jpg
-├── max_change_current.jpg
-├── max_change_difference.jpg
-├── max_normalized_change_previous.jpg
-├── max_normalized_change_current.jpg
-└── max_normalized_change_difference.jpg
 ```
 
-### `motion_scores.csv`
+---
 
-Stores frame-level analysis results, including original frame changes and brightness-normalized changes.
+## Current Development Status
 
-### `events.csv`
+The core video analysis pipeline is functional.
 
-Stores detected high-change events within shots.
+The current version supports:
 
-### `motion_curve.png`
+* Video information extraction
+* Frame difference analysis
+* Motion event detection
+* Shot detection
+* Optical flow analysis
+* Shot-level motion magnitude calculation
+* Shot-level motion stability analysis
+* CSV result export
+* Motion visualization
+* Shot clip export
 
-Visualizes the original frame change scores over time.
+The project is currently being extended toward more advanced temporal video analysis.
 
-### `comparison_curve.png`
+---
 
-Compares original frame change scores with brightness-normalized scores.
+## Future Work
 
-## Current Analysis Concept
+Future development will focus on using shot information to improve temporal processing strategies.
 
-A large frame difference does not always represent object motion.
+Possible directions include:
 
-For example, global brightness changes or shot transitions can also produce very large differences between adjacent frames.
+* Shot-boundary-aware temporal reset
+* Shot-level motion context for processing decisions
+* Temporal information reuse
+* Dynamic processing intervals
+* Reducing unnecessary optical flow computation
+* Integration with modern optical flow models
+* Comparison between traditional and deep-learning-based optical flow methods
 
-To reduce these effects, the current pipeline uses two additional steps:
+The long-term goal is to explore how shot-level motion information can be used to make video motion analysis more efficient and temporally consistent.
 
-1. **Brightness normalization**
+---
 
-   Reduces the influence of global brightness changes before comparing two frames.
+## Motivation
 
-2. **Shot boundary filtering**
+Modern video analysis often processes frames individually or uses fixed temporal intervals.
 
-   Uses shot detection to prevent frame pairs from different shots from being treated as ordinary motion events.
+However, motion characteristics can vary significantly between shots.
 
-The current detected events should therefore be interpreted as:
+By introducing shot-level motion context, this project explores whether video processing strategies can adapt to different motion conditions instead of treating all frames in the same way.
 
-> High visual-change intervals within the same shot.
+This project also serves as a practical implementation environment for experimenting with:
 
-They do not yet guarantee that the detected change is caused by actual object motion.
+* Computer vision
+* Video processing
+* Optical flow
+* Motion analysis
+* Modular Python development
+* Data visualization
 
-## Technologies
+---
 
-- Python
-- OpenCV
-- NumPy
-- pandas
-- Matplotlib
-- PySceneDetect
-- pytest
-- Ruff
-- Git / GitHub
+## Author
 
-## Planned Improvements
+**Nicole Lin**
 
-- Add automated tests
-- Add shot-level motion summaries
-- Improve event analysis
-- Add Optical Flow analysis
-- Compare different temporal frame intervals
-- Explore more robust motion representations
-- Build a simple user interface
+Graduate Student
+Department of Computer Science and Information Engineering
+National University of Tainan
 
-## Development Status
+GitHub:
 
-This project is currently under development.
+```text
+https://github.com/nicolelin0523
+```
 
-The current version provides a shot-aware frame change analysis pipeline. Future development will focus on improving motion interpretation and adding higher-level video analysis features.
+---
+
+## Repository
+
+```text
+https://github.com/nicolelin0523/video-motion-analyzer
+```
+
+

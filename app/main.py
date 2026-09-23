@@ -40,7 +40,7 @@ from src.visualization.plotter import (
     plot_shot_motion_scores,
     plot_shot_motion_stability,
 )
-
+from src.shots.clip_exporter import export_shot_clip
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -72,6 +72,9 @@ def main() -> None:
         # 偵測 shot，並排除跨 shot 的 frame pair
         shots = detect_shots(video_path)
 
+        # ------------------------------------------------------------
+        # 1. Build shot motion contexts
+        # ------------------------------------------------------------
         shot_motion_contexts = []
 
         for shot in shots:
@@ -92,7 +95,11 @@ def main() -> None:
             )
 
             shot_motion_contexts.append(context)
-        #出motion context的CSV
+
+        
+        # ------------------------------------------------------------
+        # 2. Export motion context CSV
+        # ------------------------------------------------------------
         output_path = Path("outputs/shot_motion_context.csv")
 
         save_shot_motion_contexts_to_csv(
@@ -101,7 +108,10 @@ def main() -> None:
         )
 
         print(f"Shot motion context CSV saved to: {output_path}")
-        #畫圖magnitude
+    
+        # ------------------------------------------------------------
+        # 3. Plot shot motion magnitude / 畫圖magnitude
+        # ------------------------------------------------------------
         magnitude_plot_path = Path(
             "outputs/shot_motion_magnitude.png"
         )
@@ -116,6 +126,9 @@ def main() -> None:
             f"{magnitude_plot_path}"
         )
 
+        # ------------------------------------------------------------
+        # 4. Plot shot motion stability
+        # ------------------------------------------------------------
         stability_plot_path = Path(
             "outputs/shot_motion_stability.png"
         )
@@ -129,6 +142,29 @@ def main() -> None:
             f"Shot motion stability plot saved to: "
             f"{stability_plot_path}"
         )
+
+
+        target_shot_ids = [2, 20, 24]
+
+        for shot in shots:
+            if shot.shot_id not in target_shot_ids:
+                continue
+
+            clip_output_path = Path(
+                f"outputs/shot_clips/shot_{shot.shot_id}.mp4"
+            )
+
+            export_shot_clip(
+                video_path=video_path,
+                start_frame=shot.start_frame,
+                end_frame=shot.end_frame,
+                output_path=clip_output_path,
+            )
+
+            print(
+                f"Shot {shot.shot_id} clip saved to: "
+                f"{clip_output_path}"
+            )
                 
         within_shot_results = filter_shot_boundary_results(
             analysis_results,
